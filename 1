@@ -1,0 +1,108 @@
+/******************************************************************************
+ * 文件名  ：main.c
+ * 描述    ：实现STM32F107VC的TIM定时器PWM控制指示灯亮度功能
+ * 实验平台：STM32
+ * 标准库  ：STM32F10x_StdPeriph_Driver V3.5.0
+*******************************************************************************/
+
+/* Includes ------------------------------------------------------------------*/
+#include "SZ_STM32F107VC_LIB.h"
+
+/* Private typedef -----------------------------------------------------------*/
+/* Private define ------------------------------------------------------------*/
+/* Private macro -------------------------------------------------------------*/
+/* Private variables ---------------------------------------------------------*/
+/* Private function prototypes -----------------------------------------------*/
+
+
+/**-------------------------------------------------------
+  * @函数名 main
+  * @功能   主函数
+  * @参数   无
+  * @返回值 无
+***------------------------------------------------------*/
+int main(void)
+{
+    /*!< At this stage the microcontroller clock setting is already configured, 
+         this is done through SystemInit() function which is called from startup
+         file (startup_stm32f10x_xx.s) before to branch to application main.
+         To reconfigure the default setting of SystemInit() function, refer to
+         system_stm32f10x.c file
+       */ 
+    /*!< 在系统启动文件(startup_stm32f10x_xx.s)中已经调用SystemInit()初始化了时钟, 
+         所以main函数不需要再次重复初始化时钟。默认初始化系统主时钟为72MHz。
+         SystemInit()函数的实现位于system_stm32f10x.c文件中。
+       */ 
+    uint32_t PwmValue = 0;
+    uint32_t DirValue = 0;
+      
+    /* 初始化板载LED指示灯 */
+    SZ_STM32_LEDInit(LED1);
+    SZ_STM32_LEDInit(LED2);
+    SZ_STM32_LEDInit(LED3);
+    SZ_STM32_LEDInit(LED4);
+    
+    /* 注意串口2使用Printf时"SZ_STM32F107VC_LIB.c"文件中fputc定义中设备改为SZ_STM32_COM2 */
+    /* 串口2初始化 */
+    SZ_STM32_COMInit(COM2, 115200);
+    printf(" ARMJISHU.COM-->TIM3定时器PWM实验\n\r");
+
+    TIM3_PWM_Init();
+    
+    /* Infinite loop 主循环 */
+    while (1)
+    {
+        /* 延迟 */
+        delay(6000);
+              
+        if(DirValue == 0)
+        {
+            TIM_SetCompare1(TIM3, PwmValue++);                    
+
+            if(PwmValue >= 1000)
+            {
+                DirValue = 1;
+                PwmValue = 999;
+            }                    
+        }
+        else
+        {
+            TIM_SetCompare1(TIM3, PwmValue--);                    
+
+            if(PwmValue == 0)
+            {
+                DirValue = 0;        
+            }                    
+        }
+            
+        /* 此处可以添加用户的程序 */
+    }    
+}
+
+
+/**-------------------------------------------------------
+  * @函数名 SysTick_Handler_User
+  * @功能   系统节拍定时器服务请求用户处理函数
+  * @参数   无
+  * @返回值 无
+***------------------------------------------------------*/
+void SysTick_Handler_User(void)
+{
+    static uint32_t TimeIncrease = 0;
+
+    if((TimeIncrease%100) == 0)
+    {
+        if((TimeIncrease%2000) == 0) //每2秒亮100毫秒
+        {
+            LED4OBB = 0;
+        }
+        else
+        {
+            LED4OBB = 1;
+        }
+    }
+    TimeIncrease++;
+}
+
+
+/*************************************************************END OF FILE****/
